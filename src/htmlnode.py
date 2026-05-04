@@ -14,7 +14,7 @@ class HTMLNode:
         if not self.props:
             return ""
         for key, value in self.props.items():
-            return_string += f" {key}={value}"
+            return_string += f' {key}="{value}"'
 
         return return_string
 
@@ -26,14 +26,11 @@ class HTMLLeafNode(HTMLNode):
         super().__init__(tag=tag, value=value, props=props)
 
     def to_html(self):
-        if not self.value:
-            raise ValueError
-
         if not self.tag:
             return self.value
 
         entry_tag = "<" + self.tag
-        entry_tag = entry_tag + super().props_to_html() + ">"
+        entry_tag = entry_tag + self.props_to_html() + ">"
 
         return f"{entry_tag}{self.value}</{self.tag}>"
 
@@ -45,4 +42,13 @@ class HTMLParentNode(HTMLNode):
         super().__init__(tag=tag, children=children, props=props)
 
     def to_html(self):
-        pass
+        if not self.tag:
+            raise ValueError("tag should be defined in a parent node")
+        if not self.children:
+            raise ValueError("parent node should contain at least one child")
+
+        children_string = ""
+        for child in self.children:
+            children_string += child.to_html()
+
+        return f"<{self.tag}{self.props_to_html()}>{children_string}</{self.tag}>"
