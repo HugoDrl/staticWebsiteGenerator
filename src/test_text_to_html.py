@@ -1,7 +1,7 @@
 import unittest
 
 from htmlnode import HTMLLeafNode
-from process import split_nodes_delimiter, text_node_to_html_node
+from process import extract_markdown_images_or_links, split_nodes_delimiter, text_node_to_html_node
 from textnode import TextNode, TextType
 
 class TestConvertTextToHTMLNode(unittest.TestCase):
@@ -72,6 +72,71 @@ class TestConvertTextNodes(unittest.TestCase):
         expected = [TextNode(text="hey, _how_ are you ?", text_type=TextType.TEXT)]
 
         self.assertEqual(split_nodes_delimiter(nodes=[textnode], delimiter="'", new_type=TextType.ITALIC), expected)
+
+    def test_extract_image(self):
+        text = "![description](link_image)"
+        expected = [("description", "link_image")]
+        self.assertEqual(extract_markdown_images_or_links(text, TextType.IMAGE), expected)
+
+    def test_extract_images(self):
+        text = "![description](link_image) and also ![test](test_image)"
+        expected = [("description", "link_image"), ("test", "test_image")]
+        self.assertEqual(extract_markdown_images_or_links(text, TextType.IMAGE), expected)
+
+    def test_extract_links(self):
+        text = "[description](link)"
+        expected = [("description", "link")]
+        self.assertEqual(extract_markdown_images_or_links(text, TextType.LINK), expected)
+
+    def test_extract_wrong_type(self):
+        text = "![description](link_image)"
+        expected = []
+        self.assertEqual(extract_markdown_images_or_links(text, TextType.LINK), expected)
+
+    def test_extract_image_from_nodes(self):
+        node = TextNode(text='hey look at my ![car](https://car) !', text_type=TextType.TEXT)
+        expected = [
+                TextNode(text="hey look at my ", text_type=TextType.TEXT),
+                TextNode(text="car", text_type=TextType.IMAGE, url="https://car"),
+                TextNode(text=" !", text_type=TextType.TEXT),
+                ]
+        self.assertEqual(
+                split_nodes_delimiter([node], new_type=TextType.IMAGE, delimiter=""),
+                expected
+                )
+
+    def test_only_link_from_nodes(self):
+        node = TextNode(text='[car](https://car)', text_type=TextType.TEXT)
+        expected = [
+                TextNode(text="car", text_type=TextType.LINK, url="https://car"),
+                ]
+        self.assertEqual(
+                split_nodes_delimiter([node], new_type=TextType.LINK, delimiter=""),
+                expected
+                )
+
+    def test_extract_no_image_from_nodes(self):
+        node = TextNode(text='hey look at my [car](https://car) !', text_type=TextType.TEXT)
+        expected = [
+                TextNode(text='hey look at my [car](https://car) !', text_type=TextType.TEXT)
+                ]
+        self.assertEqual(
+                split_nodes_delimiter([node], new_type=TextType.IMAGE, delimiter=""),
+                expected
+                )
+
+    def test_extract_image_and_link_from_nodes(self):
+        node = TextNode(text='hey look at my ![car](https://car) and my new [house](https://house)', text_type=TextType.TEXT)
+        expected = [
+                TextNode(text="hey look at my ", text_type=TextType.TEXT),
+                TextNode(text="car", text_type=TextType.IMAGE, url="https://car"),
+                TextNode(text=" and my new ", text_type=TextType.TEXT),
+                TextNode(text="house", text_type=TextType.LINK, url="https://house"),
+                ]
+
+        first = split_nodes_delimiter([node], new_type=TextType.IMAGE, delimiter="")
+        second = split_nodes_delimiter(first, new_type=TextType.LINK, delimiter="")
+        self.assertEqual(second, expected)
 
 if __name__ == "__main__":
     unittest.main()
