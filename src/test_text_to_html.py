@@ -69,5 +69,44 @@ the **same** even with inline stuff
             "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
         )
 
+    def test_list(self):
+        md = """- buy milk
+- convert this list
+- take milk back"""
+        expected = "<div><ul><li>buy milk</li><li>convert this list</li><li>take milk back</li></ul></div>"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(html, expected)
+
+    def test_ordered_list(self):
+        md = """1. get out
+2. do stuff
+3. get back in"""
+        expected = "<div><ol><li>get out</li><li>do stuff</li><li>get back in</li></ol></div>"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(html, expected)
+
+    def test_image_in_paragraph(self):
+        md = "hey this is just a simple ![paragraph](https://paragraph) !"
+        expected = '<div><p>hey this is just a simple <img src="https://paragraph" alt="paragraph"></img> !</p></div>'
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(html, expected)
+
+    def test_multiple_blocks(self):
+        md = """So i was like,
+
+
+- Hey
+- Hey
+
+And that was it..
+I don't know man."""
+        expected = "<div><p>So i was like,</p><ul><li>Hey</li><li>Hey</li></ul><p>And that was it.. I don't know man.</p></div>"
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(html, expected)
+
 if __name__ == "__main__":
     unittest.main()

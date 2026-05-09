@@ -9,7 +9,7 @@ class TextType(Enum):
     IMAGE = "image"
 
 class BlockType(Enum):
-    PARAGRAPH = "p"
+    PARAGRAPH = "paragraph"
     HEADING = "heading"
     CODE = "code"
     QUOTE = "quote"
