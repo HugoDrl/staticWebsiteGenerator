@@ -1,4 +1,5 @@
 import os
+import sys
 
 from process_html import extract_title, markdown_to_html_node
 
@@ -28,13 +29,15 @@ def copy_files(source_folder: str, destination_folder: str, remove: bool = True)
             continue
         process_file(element, source_folder, destination_folder)
 
-def generate_page(from_path: str, template_path: str, dest_path: str) -> None:
+def generate_page(from_path: str, template_path: str, dest_path: str, base_path: str) -> None:
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
     with open(from_path) as f:
         content = f.read()
     with open(template_path) as t:
         template = t.read()
     html = markdown_to_html_node(content).to_html()
+    html = html.replace('href="/', f'href="{base_path}')
+    html = html.replace('src="/', f'src="{base_path}')
     title = extract_title(content)
     template = template.replace("{{ Title }}", title)
     template = template.replace("{{ Content }}", html)
@@ -43,20 +46,26 @@ def generate_page(from_path: str, template_path: str, dest_path: str) -> None:
     with open(dest_path, "w+") as f:
         f.write(template)
 
-def generate_website(from_folder: str, template_path: str, dest_folder: str) -> None:
+def generate_website(from_folder: str, template_path: str, dest_folder: str, base_path: str) -> None:
     if not os.path.exists(from_folder):
         raise FileExistsError(f"{from_folder} not found")
     for element in os.listdir(from_folder):
-        print(f"starting with creation of {from_folder}/{element}")
         if os.path.isdir(f"{from_folder}/{element}"):
-            print(f"{element} is a folder, creating folder..")
             os.mkdir(f"{dest_folder}/{element}") 
-            generate_website(f"{from_folder}/{element}", template_path, f"{dest_folder}/{element}")
+            generate_website(f"{from_folder}/{element}", template_path, f"{dest_folder}/{element}", base_path)
             continue
-        print(f"{element} is a file. Copying into public")
-        generate_page(f"{from_folder}/{element}", template_path, f"{dest_folder}/{element.replace(".md", ".html")}")
+        generate_page(f"{from_folder}/{element}", template_path, f"{dest_folder}/{element.replace(".md", ".html")}", base_path)
 
 def main():
-    copy_files("./static", "./public")
-    generate_website("./content", "./template.html", "./public")
+    if len(sys.argv) > 1:
+        base_path = sys.argv[1]
+    else:
+        base_path = "/"
+    copy_files("./static", "./docs")
+    generate_website(
+            from_folder="./content",
+            template_path="./template.html",
+            dest_folder="./docs",
+            base_path=base_path,
+            )
 main()
