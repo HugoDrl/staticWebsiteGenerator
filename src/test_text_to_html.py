@@ -3,7 +3,7 @@ import unittest
 from htmlnode import HTMLLeafNode, HTMLParentNode
 from process import extract_markdown_images_or_links, split_nodes_delimiter, text_node_to_html_node, text_to_text_nodes
 from process_blocks import identify_block
-from process_html import markdown_to_html_node
+from process_html import extract_title, markdown_to_html_node
 from textnode import TextNode, TextType
 
 class TestConvertTextToHTMLNode(unittest.TestCase):
@@ -107,6 +107,28 @@ I don't know man."""
         node = markdown_to_html_node(md)
         html = node.to_html()
         self.assertEqual(html, expected)
+
+    def test_quote(self):
+        md= """> Citation
+> Citation2
+> Source"""
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        expected = "<div><blockquote>Citation\nCitation2\nSource</blockquote></div>"
+        self.assertEqual(html, expected)
+
+class TestExtractTitle(unittest.TestCase):
+
+    def test_raise_h2(self):
+        def func():
+            text = "## title h2"
+            return extract_title(text)
+        self.assertRaises(Exception, func)
+
+    def test_return_h1(self):
+        title = extract_title("# TITLE")
+        self.assertEqual(title, "TITLE")
+
 
 if __name__ == "__main__":
     unittest.main()

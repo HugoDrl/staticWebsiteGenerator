@@ -1,8 +1,10 @@
 import os
 
-from process_html import markdown_to_html_node
+from process_html import extract_title, markdown_to_html_node
 
 def delete_files(folder: str) -> None:
+    if not os.path.exists(folder):
+        return
     for element in os.listdir(folder):
         if os.path.isdir(f"{folder}/{element}"):
             delete_files(f"{folder}/{element}")
@@ -11,19 +13,10 @@ def delete_files(folder: str) -> None:
     os.rmdir(folder)
 
 def process_file(file: str, source_folder: str, destination_folder: str):
-    if file.endswith(".md"):
-        filename = file.replace(".md", ".html")
-        with open(f"{source_folder}/{file}") as f:
-            content = f.read()
-        node = markdown_to_html_node(content)
-        html = node.to_html()
-        with open(f"{destination_folder}/{filename}", mode="w+") as w:
-            w.write(html)
-    else:
-        with open(f"{source_folder}/{file}", mode="rb") as f:
-            content = f.read()
-        with open(f"{destination_folder}/{file}", mode="wb+") as w:
-            w.write(content)
+    with open(f"{source_folder}/{file}", mode="rb") as f:
+        content = f.read()
+    with open(f"{destination_folder}/{file}", mode="wb+") as w:
+        w.write(content)
 
 def copy_files(source_folder: str, destination_folder: str, remove: bool = True) -> None:
     if remove:
@@ -35,7 +28,35 @@ def copy_files(source_folder: str, destination_folder: str, remove: bool = True)
             continue
         process_file(element, source_folder, destination_folder)
 
-        
+def generate_page(from_path: str, template_path: str, dest_path: str) -> None:
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+    with open(from_path) as f:
+        content = f.read()
+    with open(template_path) as t:
+        template = t.read()
+    html = markdown_to_html_node(content).to_html()
+    title = extract_title(content)
+    template = template.replace("{{ Title }}", title)
+    template = template.replace("{{ Content }}", html)
+
+    os.makedirs("/".join(dest_path.split("/")[:-1]), exist_ok=True)
+    with open(dest_path, "w+") as f:
+        f.write(template)
+
+def generate_website(from_folder: str, template_path: str, dest_folder: str) -> None:
+    if not os.path.exists(from_folder):
+        raise FileExistsError(f"{from_folder} not found")
+    for element in os.listdir(from_folder):
+        print(f"starting with creation of {from_folder}/{element}")
+        if os.path.isdir(f"{from_folder}/{element}"):
+            print(f"{element} is a folder, creating folder..")
+            os.mkdir(f"{dest_folder}/{element}") 
+            generate_website(f"{from_folder}/{element}", template_path, f"{dest_folder}/{element}")
+            continue
+        print(f"{element} is a file. Copying into public")
+        generate_page(f"{from_folder}/{element}", template_path, f"{dest_folder}/{element.replace(".md", ".html")}")
+
 def main():
     copy_files("./static", "./public")
+    generate_website("./content", "./template.html", "./public")
 main()
