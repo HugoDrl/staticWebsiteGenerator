@@ -18,6 +18,10 @@ This program copies every files from \.\/static folder to \.\/docs, and process 
 
 ## Syntax
 
+## What this tool doesn't do :
+
 Please note that **bold** content is only processed with \*\* and _italic_ only with \_.
+
+This tool currently doesn't handle escape characters (e.g. \\\[\\\]). It is planned to make this feature available in the future.
 
 This static website generator is built following boot.dev course.
