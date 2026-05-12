@@ -16,8 +16,6 @@ User still have to provide CSS files in order to style the website.
 
 This program copies every files from \.\/static folder to \.\/docs, and process every **markdown** file from \.\/content to \.\/public, in respect to file tree.
 
-## Syntax
-
 ## What this tool doesn't do :
 
 Please note that **bold** content is only processed with \*\* and _italic_ only with \_.
